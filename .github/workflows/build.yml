@@ -1,0 +1,51 @@
+name: Build ESP32-C6 ESP-Hosted Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      prefix:
+        description: 'Prefix for binary name'
+        required: true
+        default: 'esp32-c6-esp-hosted'
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: esp-idf build and merge binaries
+        uses: espressif/esp-idf-ci-action@v1.1.0
+        with:
+          esp_idf_version: v5.5
+          target: esp32c6
+          path: '.'
+          command: |
+            idf.py build &&
+            cd build &&
+            # Copy individual components for packaging
+            cp bootloader/bootloader.bin ../bootloader-esp32c6.bin &&
+            cp partition_table/partition-table.bin ../partition-table-esp32c6.bin &&
+            cp slave.bin ../slave.bin &&
+            # Create merged binary for ESP Launchpad
+            esptool.py --chip esp32c6 merge_bin -o ../esp32-c6-esp-hosted-${{ github.event.inputs.version || 'latest' }}-esp32c6.bin "@flash_args"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-c6-esp-hosted-${{ github.event.inputs.version || 'latest' }}-esp32c6
+          path: |
+            esp32-c6-esp-hosted-${{ github.event.inputs.version || 'latest' }}-esp32c6.bin
+            bootloader-esp32c6.bin
+            partition-table-esp32c6.bin
+            slave.bin

@@ -1,0 +1,30 @@
+esp_toml_version = 1.0
+
+# Base URL where ESP32-C6 ESP-Hosted firmware binaries are hosted
+firmware_images_url = "https://georgik.github.io/esp32-c6-esp-hosted-example/firmware/"
+
+# ESP32-C6 ESP-Hosted applications available
+supported_apps = ["ESP-Hosted-MCU-Slave"]
+
+# Configuration documentation
+config_readme_url = "https://raw.githubusercontent.com/georgik/esp32-c6-esp-hosted-example/main/README.md"
+
+[ESP-Hosted-MCU-Slave]
+# Supported ESP32 chipsets
+chipsets = ["ESP32-C6"]
+
+# Development kits
+developKits.esp32-c6 = ["esp32-c6-devkitc-1", "esp32-c6-devkitm-1"]
+
+# Firmware images for each board (using merged binaries)
+image.esp32-c6-devkitc-1 = "esp32-c6-esp-hosted-latest-esp32c6.bin"
+image.esp32-c6-devkitm-1 = "esp32-c6-esp-hosted-latest-esp32c6.bin"
+
+# Description
+description = "ESP32-C6 ESP-Hosted MCU Slave - Provides Wi-Fi and Bluetooth connectivity to host MCUs via SDIO, SPI, or UART interfaces. This firmware enables host MCUs to utilize ESP32-C6's wireless capabilities."
+
+# Additional information
+readme.text = "https://raw.githubusercontent.com/georgik/esp32-c6-esp-hosted-example/main/README.md"
+
+# Console settings
+console_baudrate = 115200

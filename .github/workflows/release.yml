@@ -1,0 +1,104 @@
+name: Create GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: 'Name of the GitHub Release'
+        required: true
+        default: 'v1.0.0'
+      release_tag:
+        description: 'Tag for the GitHub Release'
+        required: true
+        default: 'v1.0.0'
+      prefix:
+        description: 'Prefix for binary name'
+        required: true
+        default: 'esp32-c6-esp-hosted'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build firmware
+        uses: espressif/esp-idf-ci-action@v1.1.0
+        with:
+          esp_idf_version: v5.5
+          target: esp32c6
+          path: '.'
+          command: |
+            idf.py build &&
+            cd build &&
+            # Create merged binary for ESP Launchpad
+            esptool.py --chip esp32c6 merge_bin -o ../esp32-c6-esp-hosted-${{ github.event.inputs.release_tag }}-esp32c6.bin "@flash_args"
+
+      - name: Generate Release Notes
+        run: |
+          cat > /tmp/release_notes.md <<EOF
+          # ESP32-C6 ESP-Hosted MCU Slave ${{ github.event.inputs.release_tag }}
+          
+          ## Web-based Flashing (Easiest)
+          
+          Use our web-based installer for one-click flashing:
+          
+          [![Try it with ESP Launchpad](https://espressif.github.io/esp-launchpad/assets/try_with_launchpad.png)](https://georgik.github.io/esp32-c6-esp-hosted-example/?flashConfigURL=https://georgik.github.io/esp32-c6-esp-hosted-example/config/config.toml)
+          
+          ## Manual Installation
+          
+          1. Download the firmware binary for ESP32-C6
+          2. Use esptool.py or ESP32 Flash Download Tool to flash the binary
+          3. Connect your ESP32-C6 development board via USB
+          4. Flash the binary to address 0x0
+          
+          ## Hardware Requirements
+          
+          - ESP32-C6 development board (DevKitC-1 or DevKitM-1)
+          - USB cable for programming and power
+          - Host MCU for ESP-Hosted communication (optional for testing)
+          
+          ## Features
+          
+          - Wi-Fi and Bluetooth connectivity for host MCUs
+          - SDIO, SPI (Full/Half-Duplex), and UART transport support
+          - Compatible with ESP-Hosted MCU protocol
+          - Optimized for low power consumption
+          - Support for advanced features like Network Split and Host Power Save
+          
+          ## Transport Interfaces
+          
+          This firmware supports multiple transport interfaces:
+          - **SDIO** (default) - High-speed interface for maximum throughput
+          - **SPI Full-Duplex** - Reliable bidirectional communication
+          - **SPI Half-Duplex** - Simplified SPI interface
+          - **UART** - Simple serial communication
+          
+          ## Getting Started
+          
+          After flashing the firmware, connect your host MCU using one of the supported transport interfaces. Refer to the [ESP-Hosted MCU documentation](https://github.com/espressif/esp-hosted-mcu) for host-side implementation details.
+          EOF
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          release_name: ${{ github.event.inputs.release_name }}
+          body_path: /tmp/release_notes.md
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./esp32-c6-esp-hosted-${{ github.event.inputs.release_tag }}-esp32c6.bin
+          asset_name: esp32-c6-esp-hosted-${{ github.event.inputs.release_tag }}-esp32c6.bin
+          asset_content_type: application/octet-stream
