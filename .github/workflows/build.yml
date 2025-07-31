@@ -36,7 +36,7 @@ jobs:
             # Copy individual components for packaging
             cp bootloader/bootloader.bin ../bootloader-esp32c6.bin &&
             cp partition_table/partition-table.bin ../partition-table-esp32c6.bin &&
-            cp slave.bin ../slave.bin &&
+            cp network_adapter.bin ../network_adapter.bin &&
             # Create merged binary for ESP Launchpad
             esptool.py --chip esp32c6 merge_bin -o ../esp32-c6-esp-hosted-${{ github.event.inputs.version || 'latest' }}-esp32c6.bin "@flash_args"
 
@@ -48,4 +48,4 @@ jobs:
             esp32-c6-esp-hosted-${{ github.event.inputs.version || 'latest' }}-esp32c6.bin
             bootloader-esp32c6.bin
             partition-table-esp32c6.bin
-            slave.bin
+            network_adapter.bin
